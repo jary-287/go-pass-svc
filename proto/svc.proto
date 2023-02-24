@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package proto;
+option go_package="/svc;svc";
+
+
+service Svc {
+    rpc AddSvc(SvcInfo) returns (response) {}
+    rpc DeleteSvc(SvcInfo) returns (response) {}
+    rpc FindSvcById(SvcId) returns (SvcInfo) {}
+    rpc UpdateSvc(SvcInfo) returns (response){}
+    rpc FindAllSvc(FindAll)returns(AllSvc) {}
+}
+
+message SvcInfo{
+    uint64 svc_id=1;
+    string svc_name=2;
+    string svc_namespace=3;
+    string svc_type=4;
+    int64 svc_team_id =5;
+    repeated SvcPort ports=6;
+    map<string, string> selector=7;
+    string load_banlancer_ip=8;
+    string external_name=9;
+    string cluster_ip=10;
+}
+message SvcPort{
+    uint64 id=1;
+    uint64 svc_id=2;
+    string protocol=3;
+    int32 port=4;
+    int32 target_port=5;
+    int32 node_port=6;
+}
+message SvcId {
+    uint64 id=1;
+}
+message response {
+    string msg=1;
+}
+message FindAll{
+
+}
+
+message AllSvc{
+    repeated SvcInfo svc_info=1; 
+}
