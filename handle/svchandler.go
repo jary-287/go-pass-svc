@@ -16,6 +16,7 @@ type SvcHandler struct {
 	SvcService service.ISvcService
 }
 
+//第二个值传指针
 func Swap(source, target interface{}) error {
 	data, err := json.Marshal(source)
 	if err != nil {
@@ -31,6 +32,7 @@ func (sh *SvcHandler) AddSvc(ctx context.Context, info *svc.SvcInfo, rsp *svc.Re
 		rsp.Msg = "swap to model svc failed"
 		return err
 	}
+	log.Println("swap over:", info, svcModel)
 	if err := sh.SvcService.CreateToK8s(info); err != nil {
 		rsp.Msg = "crate to k8s failed"
 		return err
@@ -51,7 +53,7 @@ func (sh *SvcHandler) FindAllSvc(ctx context.Context, findAll *svc.FindAll, allS
 	if err != nil {
 		return err
 	}
-	if err := Swap(svcs, allSvc); err != nil {
+	if err := Swap(svcs, &allSvc.SvcInfo); err != nil {
 		return err
 	}
 	log.Println("find all svc success")
@@ -60,6 +62,7 @@ func (sh *SvcHandler) FindAllSvc(ctx context.Context, findAll *svc.FindAll, allS
 
 func (sh *SvcHandler) DeleteSvc(ctx context.Context, SvcInfo *svc.SvcInfo, rsp *svc.Response) error {
 	log.Println("start delete svc:", SvcInfo.SvcName)
+	log.Println(SvcInfo)
 	if err := sh.SvcService.DeleteFromK8s(SvcInfo); err != nil {
 		rsp.Msg = "delete from  k8s failed"
 		return err
@@ -95,9 +98,12 @@ func (sh *SvcHandler) UpdateSvc(ctx context.Context, SvcInfo *svc.SvcInfo, rsp *
 }
 func (sh *SvcHandler) FindSvcById(ctx context.Context, SvcId *svc.SvcId, svcInfo *svc.SvcInfo) error {
 	if svc, err := sh.SvcService.GetSvcById(SvcId.Id); err != nil {
+		log.Println("find svc by id failed:", err)
 		return err
 	} else {
+
 		if err := Swap(svc, svcInfo); err != nil {
+			log.Println("find svc by id swap  failed:", err)
 			return err
 		}
 	}

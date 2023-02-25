@@ -1,6 +1,8 @@
 package model
 
 import (
+	"log"
+
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
@@ -33,6 +35,7 @@ type SvcRegistry struct {
 }
 
 func (sr *SvcRegistry) CreateSvc(svcInfo *Svc) (uint64, error) {
+	log.Println(svcInfo)
 	err := sr.db.Create(svcInfo).Error
 	return svcInfo.SvcID, err
 }
@@ -49,26 +52,26 @@ func (sr *SvcRegistry) DeleteSvc(id uint64) error {
 	return nil
 }
 
-// GetSvc implements ISvcRegistry
 func (sr *SvcRegistry) GetSvc() (svcs []Svc, err error) {
-	err = sr.db.Preload("SvcPorts").Find(&svcs).Error
+	err = sr.db.Preload("Ports").Find(&svcs).Error
 	return
 }
 
 // GetSvcByID implements ISvcRegistry
 func (sr *SvcRegistry) GetSvcByID(id uint64) (svcInfo *Svc, err error) {
-	err = sr.db.Where("svc_id=?", id).First(svcInfo).Error
+	err = sr.db.Preload("Ports").Where("svc_id=?", id).First(&svcInfo).Error
 	return
 }
 
 func (sr *SvcRegistry) InitTable() error {
+	log.Println("auto migrate database")
 	return sr.db.AutoMigrate(&Svc{}, &SvcPort{})
 }
 
 // UpdateSvc implements ISvcRegistry
 func (sr *SvcRegistry) UpdateSvc(svcInfo *Svc) error {
 	tx := sr.db.Begin()
-	tx.Where("svc_id = ?", svcInfo.SvcID).Save(&SvcPort{})
+	tx.Association("ports").DB.Save(svcInfo.Ports)
 	tx.Save(svcInfo)
 	if err := tx.Commit().Error; err != nil {
 		tx.Callback()
